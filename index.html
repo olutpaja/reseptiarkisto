@@ -34,15 +34,25 @@
         /* Animaatiot */
         .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Latausanimaatio */
+        .loader-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-slate-50">
     <div id="root"></div>
 
-    <script type="text/babel">
+    <!-- Huom: data-type="module" on kriittinen jotta import-lauseet toimivat Babelin sisällä -->
+    <script type="text/babel" data-type="module">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // Firebase moduulien tuonti (varmista että nämä osoitteet toimivat selaimessa)
+        // Firebase moduulien tuonti
         import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, serverTimestamp, arrayUnion, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -52,12 +62,12 @@
           Plus: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
           Search: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
           Trash: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
-          X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>,
+          X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
           Share: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>,
           Edit: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
           Shield: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
           Check: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-          Loader: () => <svg className="animate-spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg>,
+          Loader: () => <svg className="loader-spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg>,
           Download: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>,
           Upload: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>,
           Settings: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
@@ -77,7 +87,7 @@
         ];
 
         const VALID_CATEGORY_IDS = CATEGORIES.map(c => c.id).filter(id => id !== 'all');
-        const apiKey = ""; // Syötä oma Google Gemini API -avaimesi tähän
+        const apiKey = ""; // Aseta oma Google Gemini API-avaimesi tähän
 
         function App() {
           const [user, setUser] = useState(null);
@@ -96,6 +106,7 @@
           const [recipeToDelete, setRecipeToDelete] = useState(null);
           const [status, setStatus] = useState({ msg: "", type: "" });
           const [appReady, setAppReady] = useState(false);
+          const [error, setError] = useState(null);
           
           const [adminInput, setAdminInput] = useState("");
           const [brandingInput, setBrandingInput] = useState("");
@@ -123,14 +134,18 @@
             }
           }, [myRecipes, publicRecipes, activeRecipe, activeTab]);
 
-          // Firebase Alustus
+          // Firebase Alustus (v1.6.5 - resilient)
           useEffect(() => {
             const initApp = async () => {
               try {
-                // Käytetään globaalia configia jos saatavilla, muuten tyhjää objektia
-                const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-                const config = JSON.parse(configStr);
+                const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+                if (!configStr) {
+                  setError("Firebase-asetukset puuttuvat. Lisää __firebase_config koodiin.");
+                  setAppReady(true);
+                  return;
+                }
                 
+                const config = JSON.parse(configStr);
                 const firebaseApp = getApps().length === 0 ? initializeApp(config) : getApps()[0];
                 const firestore = getFirestore(firebaseApp);
                 const auth = getAuth(firebaseApp);
@@ -160,6 +175,7 @@
                 setAppReady(true);
               } catch (e) { 
                 console.error("Firebase Init Error:", e);
+                setError("Firebase-alustusvirhe. Tarkista asetukset.");
                 setAppReady(true); 
               }
             };
@@ -197,6 +213,10 @@
           const handleUpload = async (e) => {
             const file = e.target.files[0];
             if (!file || !user || !db) return;
+            if (!apiKey) {
+                setStatus({ msg: "API-avain puuttuu koodista!", type: "error" });
+                return;
+            }
             setIsAnalyzing(true);
             setStatus({ msg: "Analysoidaan kuvaa...", type: "info" });
             try {
@@ -267,10 +287,25 @@
             }
           };
 
-          if (!appReady) return <div className="min-h-screen flex items-center justify-center bg-white"><Icons.Loader /></div>;
+          if (!appReady) return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
+                <Icons.Loader />
+                <p className="text-[10px] font-black uppercase text-slate-400">Ladataan arkistoa...</p>
+            </div>
+          );
+
+          if (error) return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-6">
+                <div className="p-6 bg-red-50 text-red-600 rounded-[2.5rem] border border-red-100 max-w-sm">
+                    <h2 className="text-xl font-black uppercase mb-2">Hups!</h2>
+                    <p className="text-sm font-medium">{error}</p>
+                </div>
+                <p className="text-xs text-slate-400">Tarkista __firebase_config ja __app_id muuttujat koodista.</p>
+            </div>
+          );
 
           return (
-            <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-orange-100 pb-safe">
+            <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-orange-100 pb-safe fade-in">
               
               {/* HEADER */}
               <header className="bg-white border-b pt-12 pb-6 px-4 flex flex-col items-center gap-6 shadow-sm sticky top-0 z-30">
