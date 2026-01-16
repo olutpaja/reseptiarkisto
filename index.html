@@ -57,8 +57,8 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, serverTimestamp, arrayUnion, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- MANUAALISET ASETUKSET (TÄYTÄ NÄMÄ JOS AJAT KOODIA SELAIMESSA/GITHUBISSA) ---
-        // Kopioi nämä Firebase Consolesta (Project Settings > General > Your Apps)
+        // --- MANUAALISET ASETUKSET (TÄYTÄ NÄMÄ JOTTA OHJELMA TOIMII GITHUBISSA) ---
+        // Hae nämä Firebase Consolesta: Project Settings > General > Your Apps
         const firebaseConfigManual = {
           apiKey: "TÄHÄN_API_KEY",
           authDomain: "TÄHÄN_AUTH_DOMAIN",
@@ -128,7 +128,7 @@
           const appId = typeof __app_id !== 'undefined' ? __app_id : 'recipe-pro-master-v1';
           const currentGeminiKey = typeof apiKey !== 'undefined' && apiKey ? apiKey : geminiApiKeyManual;
 
-          // Tilaviestien automaattinen piilotus
+          // Tilaviestien automaattinen piilotus (v1.6.4)
           useEffect(() => {
             if (status.msg) {
               const timer = setTimeout(() => setStatus({ msg: "", type: "" }), 3000);
@@ -136,7 +136,7 @@
             }
           }, [status.msg]);
 
-          // Aktiivisen reseptin reaaliaikainen päivitys
+          // Aktiivisen reseptin reaaliaikainen päivitys (v1.6.1)
           useEffect(() => {
             if (activeRecipe) {
               const source = activeTab === 'private' ? myRecipes : publicRecipes;
@@ -151,13 +151,16 @@
           useEffect(() => {
             const initApp = async () => {
               try {
-                // Suositaan ympäristön configia, muuten käytetään manuaalista
                 let config;
+                // Kokeillaan ensin testiympäristön configia
                 if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                     config = JSON.parse(__firebase_config);
-                } else if (firebaseConfigManual.apiKey !== "TÄHÄN_API_KEY") {
+                } 
+                // Jos ei ole testiympäristö, käytetään manuaalista configia
+                else if (firebaseConfigManual.apiKey !== "TÄHÄN_API_KEY") {
                     config = firebaseConfigManual;
-                } else {
+                } 
+                else {
                   setError("Firebase-asetukset puuttuvat. Lisää asetukset firebaseConfigManual-muuttujaan koodissa.");
                   setAppReady(true);
                   return;
@@ -179,7 +182,7 @@
                 const adminRef = doc(firestore, 'artifacts', appId, 'public', 'data', 'settings', 'admin');
                 onSnapshot(adminRef, (d) => { if (d.exists()) setAdminConfig(d.data()); });
 
-                // Branding haku pilvestä
+                // Branding haku pilvestä (v1.6.5)
                 const brandingRef = doc(firestore, 'artifacts', appId, 'public', 'data', 'settings', 'branding');
                 onSnapshot(brandingRef, (d) => { 
                   if (d.exists()) {
